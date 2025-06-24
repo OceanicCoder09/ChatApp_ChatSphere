@@ -10,7 +10,7 @@ const app = express();
 
 // ✅ Define allowed origins
 const allowedOrigins = [
-  "http://localhost:3000",
+  
   "https://chat-app-chat-sphere.vercel.app",
 ];
 
