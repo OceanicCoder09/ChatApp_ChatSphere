@@ -6,51 +6,36 @@ import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { sendMessageRoute, recieveMessageRoute } from "../utils/APIRoutes";
 
-export default function ChatContainer({ currentChat, socket }) {
+export default function ChatContainer({ currentChat, socket, currentUser }) {
   const [messages, setMessages] = useState([]);
   const scrollRef = useRef();
   const [arrivalMessage, setArrivalMessage] = useState(null);
 
-  useEffect(async () => {
-    const data = await JSON.parse(
-      localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)
-    );
-    const response = await axios.post(recieveMessageRoute, {
-      from: data._id,
-      to: currentChat._id,
-    });
-    setMessages(response.data);
-  }, [currentChat]);
-
   useEffect(() => {
-    const getCurrentChat = async () => {
-      if (currentChat) {
-        await JSON.parse(
-          localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)
-        )._id;
-      }
+    const fetchMessages = async () => {
+      const response = await axios.post(recieveMessageRoute, {
+        from: currentUser._id,
+        to: currentChat._id,
+      });
+      setMessages(response.data);
     };
-    getCurrentChat();
-  }, [currentChat]);
+    fetchMessages();
+  }, [currentChat, currentUser]);
 
   const handleSendMsg = async (msg) => {
-    const data = await JSON.parse(
-      localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)
-    );
     socket.current.emit("send-msg", {
       to: currentChat._id,
-      from: data._id,
+      from: currentUser._id,
       msg,
     });
+    
     await axios.post(sendMessageRoute, {
-      from: data._id,
+      from: currentUser._id,
       to: currentChat._id,
       message: msg,
     });
 
-    const msgs = [...messages];
-    msgs.push({ fromSelf: true, message: msg });
-    setMessages(msgs);
+    setMessages([...messages, { fromSelf: true, message: msg }]);
   };
 
   useEffect(() => {
@@ -70,111 +55,149 @@ export default function ChatContainer({ currentChat, socket }) {
   }, [messages]);
 
   return (
-    <Container>
+    <ChatContainerWrapper>
       <div className="chat-header">
-        <div className="user-details">
+        <div className="user-info">
           <div className="avatar">
             <img
               src={`data:image/svg+xml;base64,${currentChat.avatarImage}`}
-              alt=""
+              alt={currentChat.username}
             />
           </div>
-          <div className="username">
+          <div className="user-details">
             <h3>{currentChat.username}</h3>
+            <p className="status">Online</p>
           </div>
         </div>
         <Logout />
       </div>
-      <div className="chat-messages">
-        {messages.map((message) => {
-          return (
-            <div ref={scrollRef} key={uuidv4()}>
-              <div
-                className={`message ${
-                  message.fromSelf ? "sended" : "recieved"
-                }`}
-              >
-                <div className="content ">
-                  <p>{message.message}</p>
-                </div>
-              </div>
+      
+      <div className="message-container">
+        {messages.map((message) => (
+          <div ref={scrollRef} key={uuidv4()} className="message-wrapper">
+            <div
+              className={`message-bubble ${
+                message.fromSelf ? "sent" : "received"
+              }`}
+            >
+              <p>{message.message}</p>
+              <span className="time">10:30 AM</span>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
+      
       <ChatInput handleSendMsg={handleSendMsg} />
-    </Container>
+    </ChatContainerWrapper>
   );
 }
 
-const Container = styled.div`
-  display: grid;
-  grid-template-rows: 10% 80% 10%;
-  gap: 0.1rem;
-  overflow: hidden;
-  @media screen and (min-width: 720px) and (max-width: 1080px) {
-    grid-template-rows: 15% 70% 15%;
-  }
+const ChatContainerWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #f9fafb;
+
   .chat-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 2rem;
-    .user-details {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: white;
+
+    .user-info {
       display: flex;
       align-items: center;
-      gap: 1rem;
+
       .avatar {
+        margin-right: 1rem;
+
         img {
-          height: 3rem;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          object-fit: cover;
         }
       }
-      .username {
+
+      .user-details {
         h3 {
-          color: white;
+          font-size: 1rem;
+          font-weight: 600;
+          color: #374151;
+          margin: 0 0 0.25rem 0;
+        }
+
+        .status {
+          font-size: 0.8rem;
+          color: #10b981;
+          margin: 0;
         }
       }
     }
   }
-  .chat-messages {
-    padding: 1rem 2rem;
+
+  .message-container {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    background-color: #f9fafb;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    overflow: auto;
+
     &::-webkit-scrollbar {
-      width: 0.2rem;
-      &-thumb {
-        background-color: #ffffff39;
-        width: 0.1rem;
-        border-radius: 1rem;
-      }
+      width: 6px;
     }
-    .message {
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #c1c1c1;
+      border-radius: 3px;
+    }
+
+    .message-wrapper {
+      margin-bottom: 1rem;
       display: flex;
-      align-items: center;
-      .content {
-        max-width: 40%;
-        overflow-wrap: break-word;
-        padding: 1rem;
-        font-size: 1.1rem;
-        border-radius: 1rem;
-        color: #d1d1d1;
-        @media screen and (min-width: 720px) and (max-width: 1080px) {
-          max-width: 70%;
+      flex-direction: column;
+    }
+
+    .message-bubble {
+      max-width: 70%;
+      padding: 0.75rem 1rem;
+      border-radius: 1rem;
+      position: relative;
+      font-size: 0.95rem;
+      line-height: 1.4;
+
+      p {
+        margin: 0;
+      }
+
+      .time {
+        display: block;
+        font-size: 0.7rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+        text-align: right;
+      }
+
+      &.sent {
+        align-self: flex-end;
+        background-color: #667eea;
+        color: white;
+        border-bottom-right-radius: 0.25rem;
+
+        .time {
+          color: rgba(255, 255, 255, 0.7);
         }
       }
-    }
-    .sended {
-      justify-content: flex-end;
-      .content {
-        background-color: #4f04ff21;
-      }
-    }
-    .recieved {
-      justify-content: flex-start;
-      .content {
-        background-color: #9900ff20;
+
+      &.received {
+        align-self: flex-start;
+        background-color: white;
+        color: #374151;
+        border: 1px solid #e5e7eb;
+        border-bottom-left-radius: 0.25rem;
       }
     }
   }

@@ -4,36 +4,58 @@ import { BiPowerOff } from "react-icons/bi";
 import styled from "styled-components";
 import axios from "axios";
 import { logoutRoute } from "../utils/APIRoutes";
+
 export default function Logout() {
   const navigate = useNavigate();
+  
   const handleClick = async () => {
-    const id = await JSON.parse(
-      localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)
-    )._id;
-    const data = await axios.get(`${logoutRoute}/${id}`);
-    if (data.status === 200) {
+    try {
+      const user = JSON.parse(
+        localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)
+      );
+      
+      if (user?._id) {
+        await axios.get(`${logoutRoute}/${user._id}`);
+      }
+      
       localStorage.clear();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
       navigate("/login");
     }
   };
+
   return (
-    <Button onClick={handleClick}>
+    <LogoutButton onClick={handleClick} title="Logout">
       <BiPowerOff />
-    </Button>
+    </LogoutButton>
   );
 }
 
-const Button = styled.button`
+const LogoutButton = styled.button`
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  background-color: #9a86f3;
-  border: none;
+  padding: 8px;
+  border-radius: 50%;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
   cursor: pointer;
+  transition: all 0.2s;
+  color: #6c757d;
+
   svg {
-    font-size: 1.3rem;
-    color: #ebe7ff;
+    font-size: 1.2rem;
+  }
+
+  &:hover {
+    background-color: #f1f3f5;
+    color: #dc3545;
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
   }
 `;

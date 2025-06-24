@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import axios from "axios";
-import loader from "../assets/loader.gif";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
@@ -11,20 +10,20 @@ import multiavatar from "@multiavatar/multiavatar/esm";
 export default function SetAvatar() {
   const navigate = useNavigate();
   const [avatars, setAvatars] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedAvatar, setSelectedAvatar] = useState(undefined);
 
   const toastOptions = {
-    position: "bottom-right",
-    autoClose: 8000,
+    position: "top-center",
+    autoClose: 3000,
     pauseOnHover: true,
     draggable: true,
-    theme: "dark",
+    theme: "colored",
   };
 
   useEffect(() => {
-    const user = localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY);
-    if (!user) navigate("/login");
+    if (!localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)) {
+      navigate("/login");
+    }
   }, [navigate]);
 
   const generateRandomName = () => Math.random().toString(36).substring(2, 10);
@@ -39,7 +38,6 @@ export default function SetAvatar() {
         data.push(encoded);
       }
       setAvatars(data);
-      setIsLoading(false);
     };
 
     generateAvatars();
@@ -51,126 +49,119 @@ export default function SetAvatar() {
       return;
     }
 
-    const user = await JSON.parse(
-      localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)
-    );
-
-    const { data } = await axios.post(`${setAvatarRoute}/${user._id}`, {
-      image: avatars[selectedAvatar],
-    });
-
-    if (data.isSet) {
-      user.isAvatarImageSet = true;
-      user.avatarImage = data.image;
-      localStorage.setItem(
-        process.env.REACT_APP_LOCALHOST_KEY,
-        JSON.stringify(user)
+    try {
+      const user = JSON.parse(
+        localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)
       );
-      navigate("/");
-    } else {
+
+      const { data } = await axios.post(`${setAvatarRoute}/${user._id}`, {
+        image: avatars[selectedAvatar],
+      });
+
+      if (data.isSet) {
+        user.isAvatarImageSet = true;
+        user.avatarImage = data.image;
+        localStorage.setItem(
+          process.env.REACT_APP_LOCALHOST_KEY,
+          JSON.stringify(user)
+        );
+        navigate("/");
+      }
+    } catch (error) {
       toast.error("Error setting avatar. Please try again.", toastOptions);
     }
   };
 
   return (
-    <>
-      {isLoading ? (
-        <Container>
-          <img src={loader} alt="loader" className="loader" />
-        </Container>
-      ) : (
-        <Container>
-          <div className="title-container">
-            <h1>Pick an Avatar as your profile picture</h1>
-          </div>
-          <div className="avatars">
-            {avatars.map((avatar, index) => (
-              <div
-                key={index}
-                className={`avatar ${
-                  selectedAvatar === index ? "selected" : ""
-                }`}
-                onClick={() => setSelectedAvatar(index)}
-              >
-                <img
-                  src={`data:image/svg+xml;base64,${avatar}`}
-                  alt={`avatar-${index}`}
-                />
-              </div>
-            ))}
-          </div>
-          <button onClick={setProfilePicture} className="submit-btn">
-            Set as Profile Picture
-          </button>
-          <ToastContainer />
-        </Container>
-      )}
-    </>
+    <AvatarContainer>
+      <Title>Choose Your Avatar</Title>
+      <AvatarGrid>
+        {avatars.map((avatar, index) => (
+          <AvatarItem
+            key={index}
+            $selected={selectedAvatar === index}
+            onClick={() => setSelectedAvatar(index)}
+          >
+            <AvatarImage src={`data:image/svg+xml;base64,${avatar}`} />
+          </AvatarItem>
+        ))}
+      </AvatarGrid>
+      <SubmitButton onClick={setProfilePicture}>
+        Set Profile Picture
+      </SubmitButton>
+      <ToastContainer />
+    </AvatarContainer>
   );
 }
-
-const Container = styled.div`
+const AvatarContainer = styled.div`
   display: flex;
-  justify-content: center;
-  align-items: center;
   flex-direction: column;
-  gap: 3rem;
-  background-color: #131324;
-  height: 100vh;
-  width: 100vw;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+`;
 
-  .loader {
-    max-inline-size: 100%;
+const Title = styled.h1`
+  font-size: 2rem;
+  color: #374151;
+  margin-bottom: 2rem;
+  text-align: center;
+`;
+
+const AvatarGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  margin-bottom: 2rem;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+`;
+
+const AvatarItem = styled.div`
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  padding: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 3px solid ${props => props.$selected ? '#667eea' : 'transparent'};
+  box-shadow: ${props => props.$selected ? '0 4px 12px rgba(102, 126, 234, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.1)'};
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+`;
+
+const AvatarImage = styled.img`
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+`;
+
+const SubmitButton = styled.button`
+  background: linear-gradient(to right, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   }
 
-  .title-container {
-    h1 {
-      color: white;
-    }
-  }
-
-  .avatars {
-    display: flex;
-    gap: 2rem;
-
-    .avatar {
-      border: 0.4rem solid transparent;
-      padding: 0.4rem;
-      border-radius: 5rem;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      transition: 0.5s ease-in-out;
-
-      img {
-        height: 6rem;
-        transition: 0.5s ease-in-out;
-      }
-
-      &:hover {
-        cursor: pointer;
-        transform: scale(1.1);
-      }
-    }
-
-    .selected {
-      border: 0.4rem solid #4e0eff;
-    }
-  }
-
-  .submit-btn {
-    background-color: #4e0eff;
-    color: white;
-    padding: 1rem 2rem;
-    border: none;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 0.4rem;
-    font-size: 1rem;
-    text-transform: uppercase;
-
-    &:hover {
-      background-color: #3c0edc;
-    }
+  &:active {
+    transform: translateY(0);
   }
 `;

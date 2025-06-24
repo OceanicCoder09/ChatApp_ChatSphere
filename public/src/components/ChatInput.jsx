@@ -7,138 +7,124 @@ import Picker from "emoji-picker-react";
 export default function ChatInput({ handleSendMsg }) {
   const [msg, setMsg] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
   const handleEmojiPickerhideShow = () => {
     setShowEmojiPicker(!showEmojiPicker);
   };
 
   const handleEmojiClick = (event, emojiObject) => {
-    let message = msg;
-    message += emojiObject.emoji;
-    setMsg(message);
+    setMsg(msg + emojiObject.emoji);
   };
 
   const sendChat = (event) => {
     event.preventDefault();
-    if (msg.length > 0) {
+    if (msg.trim().length > 0) {
       handleSendMsg(msg);
       setMsg("");
     }
   };
 
   return (
-    <Container>
-      <div className="button-container">
-        <div className="emoji">
-          <BsEmojiSmileFill onClick={handleEmojiPickerhideShow} />
-          {showEmojiPicker && <Picker onEmojiClick={handleEmojiClick} />}
-        </div>
-      </div>
-      <form className="input-container" onSubmit={(event) => sendChat(event)}>
-        <input
+    <InputContainer>
+      <EmojiButton onClick={handleEmojiPickerhideShow}>
+        <BsEmojiSmileFill />
+      </EmojiButton>
+      
+      {showEmojiPicker && (
+        <EmojiPickerContainer>
+          <Picker 
+            onEmojiClick={handleEmojiClick}
+            width={300}
+            height={350}
+            previewConfig={{ showPreview: false }}
+          />
+        </EmojiPickerContainer>
+      )}
+      
+      <InputForm onSubmit={sendChat}>
+        <MessageInput
           type="text"
-          placeholder="type your message here"
-          onChange={(e) => setMsg(e.target.value)}
+          placeholder="Type your message here..."
           value={msg}
+          onChange={(e) => setMsg(e.target.value)}
         />
-        <button type="submit">
+        <SendButton type="submit">
           <IoMdSend />
-        </button>
-      </form>
-    </Container>
+        </SendButton>
+      </InputForm>
+    </InputContainer>
   );
 }
 
-const Container = styled.div`
-  display: grid;
+const InputContainer = styled.div`
+  display: flex;
   align-items: center;
-  grid-template-columns: 5% 95%;
-  background-color: #080420;
-  padding: 0 2rem;
-  @media screen and (min-width: 720px) and (max-width: 1080px) {
-    padding: 0 1rem;
-    gap: 1rem;
-  }
-  .button-container {
-    display: flex;
-    align-items: center;
-    color: white;
-    gap: 1rem;
-    .emoji {
-      position: relative;
-      svg {
-        font-size: 1.5rem;
-        color: #ffff00c8;
-        cursor: pointer;
-      }
-      .emoji-picker-react {
-        position: absolute;
-        top: -350px;
-        background-color: #080420;
-        box-shadow: 0 5px 10px #9a86f3;
-        border-color: #9a86f3;
-        .emoji-scroll-wrapper::-webkit-scrollbar {
-          background-color: #080420;
-          width: 5px;
-          &-thumb {
-            background-color: #9a86f3;
-          }
-        }
-        .emoji-categories {
-          button {
-            filter: contrast(0);
-          }
-        }
-        .emoji-search {
-          background-color: transparent;
-          border-color: #9a86f3;
-        }
-        .emoji-group:before {
-          background-color: #080420;
-        }
-      }
-    }
-  }
-  .input-container {
-    width: 100%;
-    border-radius: 2rem;
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    background-color: #ffffff34;
-    input {
-      width: 90%;
-      height: 60%;
-      background-color: transparent;
-      color: white;
-      border: none;
-      padding-left: 1rem;
-      font-size: 1.2rem;
+  padding: 12px 16px;
+  background-color: white;
+  border-top: 1px solid #e9ecef;
+  position: relative;
+`;
 
-      &::selection {
-        background-color: #9a86f3;
-      }
-      &:focus {
-        outline: none;
-      }
-    }
-    button {
-      padding: 0.3rem 2rem;
-      border-radius: 2rem;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: #9a86f3;
-      border: none;
-      @media screen and (min-width: 720px) and (max-width: 1080px) {
-        padding: 0.3rem 1rem;
-        svg {
-          font-size: 1rem;
-        }
-      }
-      svg {
-        font-size: 2rem;
-        color: white;
-      }
-    }
+const EmojiButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  margin-right: 8px;
+  color: #6c757d;
+  font-size: 1.5rem;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #667eea;
+  }
+`;
+
+const EmojiPickerContainer = styled.div`
+  position: absolute;
+  bottom: 60px;
+  left: 10px;
+  z-index: 100;
+`;
+
+const InputForm = styled.form`
+  display: flex;
+  flex: 1;
+  align-items: center;
+  background-color: #f8f9fa;
+  border-radius: 20px;
+  padding: 0 12px;
+`;
+
+const MessageInput = styled.input`
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 10px 0;
+  font-size: 14px;
+  color: #495057;
+  outline: none;
+
+  &::placeholder {
+    color: #adb5bd;
+  }
+`;
+
+const SendButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  color: #667eea;
+  font-size: 1.5rem;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #5a6fd1;
+  }
+
+  &:disabled {
+    color: #ced4da;
+    cursor: not-allowed;
   }
 `;
