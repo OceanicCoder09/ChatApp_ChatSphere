@@ -18,11 +18,11 @@ export default function Chat() {
 
   useEffect(() => {
     async function checkUser() {
-      if (!localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)) {
+      if (!localStorage.getItem(process.env.REACT_APP_API_URL)) {
         navigate("/login");
       } else {
         const userData = await JSON.parse(
-          localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)
+          localStorage.getItem(process.env.REACT_APP_API_URL)
         );
         setCurrentUser(userData);
         setIsLoading(false);

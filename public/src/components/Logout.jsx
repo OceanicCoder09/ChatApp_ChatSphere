@@ -11,7 +11,7 @@ export default function Logout() {
   const handleClick = async () => {
     try {
       const user = JSON.parse(
-        localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)
+        localStorage.getItem(process.env.REACT_APP_API_URL)
       );
       
       if (user?._id) {

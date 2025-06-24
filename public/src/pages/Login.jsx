@@ -20,7 +20,7 @@ export default function Login() {
   };
   
   useEffect(() => {
-    if (localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)) {
+    if (localStorage.getItem(process.env.REACT_APP_API_URL)) {
       navigate("/");
     }
   }, []);
@@ -60,7 +60,7 @@ export default function Login() {
         }
         if (data.status === true) {
           localStorage.setItem(
-            process.env.REACT_APP_LOCALHOST_KEY,
+            process.env.REACT_APP_API_URL,
             JSON.stringify(data.user)
           );
           navigate("/");
